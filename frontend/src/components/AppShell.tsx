@@ -14,6 +14,7 @@ const navItems: NavItem[] = [
   { to: '/data-description', label: '数据说明', icon: 'i' },
   { to: '/admin/users', label: '用户管理', icon: '⚙', admin: true },
   { to: '/admin/templates', label: '模板管理', icon: '▤', admin: true },
+  { to: '/admin/software', label: '软件管理', icon: '◈', admin: true },
 ];
 
 const ROLE_LABELS: Record<string, string> = { viewer: '仅查看', provider: '提供数据', admin: '管理员' };
