@@ -263,3 +263,23 @@ textarea.input { resize: vertical; min-height: 180px; }
 @media (max-width: 420px) {
   .metric-compare-card { min-height: 240px; }
 }
+
+/* ---- Admin: role management ---- */
+.role-cell { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.role-tag { display: inline-flex; align-items: center; gap: 2px; }
+.role-remove {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; padding: 0; border: none; border-radius: 50%;
+  background: var(--color-surface-muted); color: var(--color-muted);
+  font-size: 11px; line-height: 1; cursor: pointer;
+}
+.role-remove:hover { background: var(--color-danger-soft); color: var(--color-danger); }
+.role-remove:disabled { opacity: .4; cursor: not-allowed; }
+.role-add {
+  display: inline-flex; align-items: center; gap: 2px;
+  padding: 3px 8px; border: 1px dashed var(--color-line); border-radius: 12px;
+  background: transparent; color: var(--color-brand); font-size: 12px;
+  cursor: pointer; white-space: nowrap;
+}
+.role-add:hover { border-color: var(--color-brand); background: var(--color-brand-soft); }
+.role-add:disabled { opacity: .4; cursor: not-allowed; }
