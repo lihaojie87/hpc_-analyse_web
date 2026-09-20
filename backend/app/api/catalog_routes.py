@@ -70,6 +70,7 @@ async def create(
 @router.get("")
 async def list_records(
     user=Depends(require_permission("data:read")),
+    software_code: str | None = Query(default=None, alias="softwareCode"),
     db: AsyncSession = Depends(get_db),
 ):
     """List records visible to the current user.
@@ -79,6 +80,12 @@ async def list_records(
     """
     _, permissions = await get_roles_permissions(db, user.id)
     query = select(PerformanceRecord).where(PerformanceRecord.deleted.is_(False))
+    if software_code:
+        sw = (await db.execute(select(Software).where(Software.code == software_code))).scalar_one_or_none()
+        if sw:
+            query = query.where(PerformanceRecord.software_id == sw.id)
+        else:
+            return {"items": [], "pagination": {"page": 1, "pageSize": 20, "total": 0, "totalPages": 0}}
     if "data:update-any" not in permissions:
         query = query.where(PerformanceRecord.owner_user_id == user.id)
     rows = (await db.execute(query.order_by(PerformanceRecord.updated_at.desc()))).scalars().all()
@@ -92,6 +99,7 @@ async def list_records(
     if sw_ids:
         sw_rows = (await db.execute(select(Software).where(Software.id.in_(sw_ids)))).scalars().all()
         sw_map = {s.id: s.name for s in sw_rows}
+        sw_code_map = {s.id: s.code for s in sw_rows}
     pf_map = {}
     if pf_ids:
         pf_rows = (await db.execute(select(Profile).where(Profile.id.in_(pf_ids)))).scalars().all()
@@ -101,6 +109,7 @@ async def list_records(
     for r in rows:
         d = record_dict(r)
         d["softwareName"] = sw_map.get(r.software_id)
+        d["softwareCode"] = sw_code_map.get(r.software_id)
         d["profileName"] = pf_map.get(r.profile_id)
         items.append(d)
 

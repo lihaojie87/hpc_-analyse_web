@@ -13,6 +13,7 @@ import ImportWizard from './pages/ImportWizard';
 import TemplateAdmin from './pages/TemplateAdmin';
 import SoftwareAdmin from './pages/SoftwareAdmin';
 import SourceAdmin from './pages/SourceAdmin';
+import SoftwareAnalysis from './pages/SoftwareAnalysis';
 import ProtectedRoute from './components/ProtectedRoute';
 import AppShell from './components/AppShell';
 
@@ -33,5 +34,6 @@ export default function App(): JSX.Element { return <BrowserRouter><Routes>
   <Route path="/admin/templates" element={<BusinessPage><TemplateAdmin /></BusinessPage>} />
   <Route path="/admin/software" element={<BusinessPage><SoftwareAdmin /></BusinessPage>} />
   <Route path="/admin/sources" element={<BusinessPage><SourceAdmin /></BusinessPage>} />
+  <Route path="/analysis/:softwareCode" element={<BusinessPage><SoftwareAnalysis /></BusinessPage>} />
   <Route path="*" element={<Navigate to="/dashboard" replace />} />
 </Routes></BrowserRouter>; }

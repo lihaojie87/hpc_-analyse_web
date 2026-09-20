@@ -73,6 +73,7 @@ async def record_dict_with_names(db: AsyncSession, record: PerformanceRecord) ->
     if record.software_id:
         sw = await db.get(Software, record.software_id)
         base["softwareName"] = sw.name if sw else None
+        base["softwareCode"] = sw.code if sw else None
     if record.profile_id:
         pr = await db.get(Profile, record.profile_id)
         base["profileName"] = pr.name if pr else None

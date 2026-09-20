@@ -13,6 +13,7 @@ export interface PortalRecord {
   stableKey: string;
   softwareId?: string | null;
   softwareName?: string | null;
+  softwareCode?: string | null;
   templateName?: string | null;
   etag?: string | null;
   ownerUserId?: string | null;

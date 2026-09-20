@@ -283,3 +283,38 @@ textarea.input { resize: vertical; min-height: 180px; }
 }
 .role-add:hover { border-color: var(--color-brand); background: var(--color-brand-soft); }
 .role-add:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ---- Analysis page (software report) ---- */
+.analysis-hero {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 16px; padding: 28px 32px; border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, #102a43 0%, #1a4971 100%); color: #fff;
+}
+.analysis-hero-left { display: grid; gap: 8px; }
+.analysis-hero-breadcrumb { margin: 0; font-size: 12px; color: #89b4d1; letter-spacing: .04em; }
+.analysis-hero-title { margin: 0; font-size: 28px; letter-spacing: -.02em; font-weight: 500; color: #fff; }
+.analysis-hero-subtitle { margin: 0; color: #a9cce2; font-size: 14px; }
+.analysis-hero-right { display: flex; align-items: center; flex-shrink: 0; }
+.analysis-hero-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.analysis-hero-tag {
+  display: inline-flex; padding: 3px 10px; border-radius: 12px;
+  background: rgba(255,255,255,.12); color: #c5dff5; font-size: 12px;
+}
+.analysis-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.analysis-card {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 18px 20px; background: var(--color-surface-muted);
+  border: 1px solid var(--color-line); border-radius: var(--radius-md);
+}
+.analysis-card-icon { font-size: 24px; line-height: 1.4; color: var(--color-brand); }
+.analysis-card-label { font-size: 13px; color: var(--color-muted); margin-bottom: 4px; }
+.analysis-card-value { font-size: 26px; font-weight: 500; letter-spacing: -.02em; color: var(--color-ink); }
+.analysis-card-unit { font-size: 14px; font-weight: 400; color: var(--color-muted); margin-left: 4px; }
+.analysis-text { line-height: 1.8; font-size: 14px; color: var(--color-ink); }
+.analysis-text strong { color: var(--color-brand-dark); }
+.analysis-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.analysis-tag {
+  display: inline-flex; padding: 5px 14px; border-radius: 16px;
+  background: var(--color-brand-soft); color: var(--color-brand-dark);
+  font-size: 13px; font-weight: 500;
+}
