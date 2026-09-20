@@ -22,3 +22,8 @@ async def new_version(template_id:str,p:TemplateVersionIn,user=Depends(require_p
 @router.post('/versions/{version_id}/publish')
 async def publish(version_id:str,user=Depends(require_permission('template:manage')),db:AsyncSession=Depends(get_db)):
  v=await publish_version(db,version_id,user); return {'id':v.id,'status':v.status,'publishedBy':v.published_by}
+
+@router.get('/versions/{version_id}/fields')
+async def get_fields(version_id:str,user=Depends(require_permission('template:read','template:manage')),db:AsyncSession=Depends(get_db)):
+ fields=(await db.execute(select(TemplateField).where(TemplateField.template_version_id==version_id).order_by(TemplateField.ordinal))).scalars().all()
+ return {'items':[{'id':f.id,'path':f.path,'label':f.label,'dataType':f.data_type,'unit':f.unit,'required':f.required,'rules':f.rules_json} for f in fields]}
