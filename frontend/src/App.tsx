@@ -12,6 +12,7 @@ import AdminUsers from './pages/AdminUsers';
 import ImportWizard from './pages/ImportWizard';
 import TemplateAdmin from './pages/TemplateAdmin';
 import SoftwareAdmin from './pages/SoftwareAdmin';
+import SourceAdmin from './pages/SourceAdmin';
 import ProtectedRoute from './components/ProtectedRoute';
 import AppShell from './components/AppShell';
 
@@ -31,5 +32,6 @@ export default function App(): JSX.Element { return <BrowserRouter><Routes>
   <Route path="/admin/users" element={<BusinessPage><AdminUsers /></BusinessPage>} />
   <Route path="/admin/templates" element={<BusinessPage><TemplateAdmin /></BusinessPage>} />
   <Route path="/admin/software" element={<BusinessPage><SoftwareAdmin /></BusinessPage>} />
+  <Route path="/admin/sources" element={<BusinessPage><SourceAdmin /></BusinessPage>} />
   <Route path="*" element={<Navigate to="/dashboard" replace />} />
 </Routes></BrowserRouter>; }
