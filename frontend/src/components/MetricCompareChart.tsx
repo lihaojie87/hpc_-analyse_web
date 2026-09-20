@@ -39,7 +39,7 @@ export default function MetricCompareChart({
   unit, metricsLabel, data, valueSkipped, metaSkipped,
 }: MetricCompareChartProps): JSX.Element {
   return (
-    <section className="card chart-card metric-compare-card">
+    <section className="card chart-card metric-compare-card" role="region" aria-label={`指标对比图：${metricsLabel}（${unit}）`}>
       <h2 className="card-title">{metricsLabel}（{unit}）</h2>
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>

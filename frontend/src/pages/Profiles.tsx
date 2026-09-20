@@ -182,7 +182,7 @@ export default function Profiles(): JSX.Element {
     {visible.length === 0 ? (
       <Empty title="当前筛选暂无算例" action={<Button variant="secondary" onClick={() => setSearch('')}>清除筛选</Button>} />
     ) : multipleProfiles ? (
-      <div className="profile-sections">
+      <div className="profile-sections" role="region" aria-label="按画像分组的算例卡片">
         {Array.from(profileGroups.entries()).map(([name, items]) => (
           <section className="profile-section" key={name}>
             <h2 className="section-subtitle">{name}</h2>

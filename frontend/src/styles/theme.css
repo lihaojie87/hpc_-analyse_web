@@ -255,3 +255,11 @@ textarea.input { resize: vertical; min-height: 180px; }
 .profile-sections { display: grid; gap: 24px; }
 .profile-section { display: grid; gap: 12px; }
 .section-subtitle { margin: 0; font-size: 18px; letter-spacing: -.01em; padding-bottom: 8px; border-bottom: 1px solid var(--color-line); }
+
+/* ---- UI-T06: responsive overrides for narrow viewports ---- */
+@media (max-width: 680px) {
+  .metric-compare-card { min-height: 260px; }
+}
+@media (max-width: 420px) {
+  .metric-compare-card { min-height: 240px; }
+}
