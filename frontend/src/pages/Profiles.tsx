@@ -57,6 +57,7 @@ export default function Profiles(): JSX.Element {
     const pointsByUnit = new Map<string, MetricPoint[]>();
     const valueSkippedByUnit = new Map<string, number>();
     const metaSkippedByUnit = new Map<string, number>();
+    const valueSkippedMetricsByUnit = new Map<string, Set<string>>();
     let unitMissingSkipped = 0;
     let totalPlotted = 0;
 
@@ -82,6 +83,8 @@ export default function Profiles(): JSX.Element {
       }
       if (!Number.isFinite(numeric)) {
         valueSkippedByUnit.set(unit, (valueSkippedByUnit.get(unit) ?? 0) + 1);
+        if (!valueSkippedMetricsByUnit.has(unit)) valueSkippedMetricsByUnit.set(unit, new Set());
+        valueSkippedMetricsByUnit.get(unit)!.add(metric);
         continue;
       }
       if (!pointsByUnit.has(unit)) pointsByUnit.set(unit, []);
@@ -95,7 +98,11 @@ export default function Profiles(): JSX.Element {
       totalPlotted += 1;
     }
 
-    const unitGroups = Array.from(pointsByUnit.entries()).map(([unit, points]) => {
+    // Units that produced at least one plottable point carry their skip counts too.
+    const unitGroups: Array<{
+      unit: string; points: MetricPoint[]; metricsLabel: string;
+      valueSkipped: number; metaSkipped: number;
+    }> = Array.from(pointsByUnit.entries()).map(([unit, points]) => {
       const metrics = Array.from(new Set(points.map((p) => p.metric)));
       const metricsLabel = metrics.length === 1 ? metrics[0] : metrics.join('、');
       return {
@@ -106,11 +113,27 @@ export default function Profiles(): JSX.Element {
         metaSkipped: metaSkippedByUnit.get(unit) ?? 0,
       };
     });
+
+    // D1 fix: a valid metric/unit may hold records that yield zero plottable points
+    // (every record skipped for missing/non-numeric value, or missing metric name).
+    // pointsByUnit never creates such a unit, so the per-unit "已跳过 N 条" note that
+    // MetricCompareChart renders would be silently dropped. Surface each of those units
+    // as its own (empty) chart card so the skip count stays explainable per unit, and
+    // so a whole-software-with-skips-but-no-points case still shows a readable hint.
+    for (const [unit, n] of valueSkippedByUnit) {
+      if (pointsByUnit.has(unit)) continue;
+      const metrics = Array.from(valueSkippedMetricsByUnit.get(unit) ?? []);
+      const metricsLabel = metrics.length === 1 ? metrics[0] : metrics.length > 1 ? metrics.join('、') : '未知指标';
+      unitGroups.push({ unit, points: [], metricsLabel, valueSkipped: n, metaSkipped: 0 });
+    }
+    for (const [unit, n] of metaSkippedByUnit) {
+      if (pointsByUnit.has(unit)) continue;
+      unitGroups.push({ unit, points: [], metricsLabel: '未命名指标', valueSkipped: 0, metaSkipped: n });
+    }
     unitGroups.sort((a, b) => a.unit.localeCompare(b.unit));
 
-    // D1 fix: a unit may have records but produce zero plottable points (every record
-    // skipped for missing value/metric). Those skips live only in the per-unit skip
-    // maps and would otherwise be silently dropped. Sum them for units with no chart.
+    // Aggregate totals kept for the unit-missing note / scope summary; per-unit skips
+    // are now shown on their own cards, so no separate "other units skipped" line is needed.
     let allSkippedValue = 0;
     let allSkippedMeta = 0;
     for (const [unit, n] of valueSkippedByUnit) if (!pointsByUnit.has(unit)) allSkippedValue += n;
@@ -145,9 +168,11 @@ export default function Profiles(): JSX.Element {
           <h2 className="card-title">指标对比</h2>
         </div>
         {metricComparison.unitGroups.length === 0 ? (
-          // no plottable points at all — but if records were skipped, say so instead of a misleading "no metrics"
-          metricComparison.allSkippedValue + metricComparison.allSkippedMeta + metricComparison.unitMissingSkipped > 0 ? (
-            <Empty title={`当前软件有 ${metricComparison.allSkippedValue + metricComparison.allSkippedMeta + metricComparison.unitMissingSkipped} 条记录，但因缺少数值/指标/单位未纳入对比`} />
+          // no unit produced a plottable point or a skip note — every record lacked a
+          // unit (or there simply are no metric records). Explain instead of a misleading
+          // "no metrics". Units that only had skipped records are now their own cards above.
+          metricComparison.unitMissingSkipped > 0 ? (
+            <Empty title={`当前软件有 ${metricComparison.unitMissingSkipped} 条记录缺少单位，未纳入任何对比图`} />
           ) : (
             <Empty title="当前软件暂无可对比的数值指标" />
           )
@@ -165,11 +190,6 @@ export default function Profiles(): JSX.Element {
                 />
               ))}
             </div>
-            {metricComparison.allSkippedValue + metricComparison.allSkippedMeta > 0 && (
-              <p className="muted metric-skip-note">
-                另有 {metricComparison.allSkippedValue + metricComparison.allSkippedMeta} 条记录因缺少数值或指标名，其所属单位下无有效数值，未绘制对比图。
-              </p>
-            )}
             {metricComparison.unitMissingSkipped > 0 && (
               <p className="muted metric-skip-note">
                 另有 {metricComparison.unitMissingSkipped} 条记录缺少单位，未纳入任何对比图。
