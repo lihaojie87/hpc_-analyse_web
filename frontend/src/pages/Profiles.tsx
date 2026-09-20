@@ -45,6 +45,11 @@ export default function Profiles(): JSX.Element {
     });
     return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1]));
   }, [records]);
+  const selectedName = useMemo(() => {
+    if (!selected) return '';
+    const entry = softwareNames.find(([id]) => id === selected);
+    return entry ? entry[1] : selected;
+  }, [selected, softwareNames]);
   const visible = useMemo(() => records.filter((record) => (!selected || record.softwareId === selected) && (!search.trim() || `${record.stableKey} ${record.profileName ?? record.profileId ?? ''}`.toLowerCase().includes(search.trim().toLowerCase()))), [records, selected, search]);
 
   /* ----- UI-T05: metric comparison (grouped by unit, no extra request) ----- */
@@ -130,7 +135,7 @@ export default function Profiles(): JSX.Element {
   if (state === 'error') return <main className="stack"><div className="page-heading"><div><h1>软件画像</h1><p>按软件查看可见算例。</p></div><Button variant="secondary" onClick={() => { void load(); }}>重试</Button></div><ErrorNotice message={error} /></main>;
   if (records.length === 0) return <main className="stack"><div className="page-heading"><div><h1>软件画像</h1><p>按软件查看可见算例。</p></div></div><Empty title="暂无软件画像数据" /></main>;
   return <main className="stack">
-    <div className="page-heading"><div><h1>{selected ? `${selected} 软件画像` : '软件画像'}</h1><p>选择软件后查看其算例与性能记录，缺失字段保持为空。</p></div><Link className="button button-secondary" to="/dashboard">返回总览</Link></div>
+    <div className="page-heading"><div><h1>{selected ? `${selectedName} 软件画像` : '软件画像'}</h1><p>选择软件后查看其算例与性能记录，缺失字段保持为空。</p></div><Link className="button button-secondary" to="/dashboard">返回总览</Link></div>
     <div className="toolbar"><Input label="搜索算例" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="按 Stable Key / 画像搜索" /><label className="field"><span className="field-label">切换软件</span><select className="input" value={selected} onChange={(event) => { window.location.href = event.target.value ? `/profiles/${encodeURIComponent(event.target.value)}` : '/profiles'; }}><option value="">全部软件</option>{softwareNames.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select></label></div>
 
     {/* 指标对比：仅在选中软件且有可见记录时渲染 */}
@@ -171,7 +176,7 @@ export default function Profiles(): JSX.Element {
               </p>
             )}
             <p className="muted metric-scope-note">
-              数据口径：以上对比基于各记录的私有版本（draft/published 等，以 lifecycleStatus 为准），并非 current 发布版本。当前软件：{selected}，共 {metricComparison.totalPlotted} 条记录参与绘图。
+              数据口径：以上对比基于各记录的私有版本（draft/published 等，以 lifecycleStatus 为准），并非 current 发布版本。当前软件：{selectedName}，共 {metricComparison.totalPlotted} 条记录参与绘图。
             </p>
           </>
         )}
