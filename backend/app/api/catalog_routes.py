@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import AppError, ErrorCode
-from app.db.models import PerformanceRecord
+from app.db.models import PerformanceRecord, Software, Profile, DataTemplate, TemplateVersion
 from app.db.session import get_db
 from app.deps.auth_deps import get_current_user, require_permission
 from app.schemas.catalog import RecordCreateIn, RecordPatchIn
@@ -11,6 +11,7 @@ from app.services.catalog_service import (
     create_record,
     get_record,
     record_dict,
+    record_dict_with_names,
     submit_record,
     update_record,
     list_public_catalog_records,
@@ -81,8 +82,30 @@ async def list_records(
     if "data:update-any" not in permissions:
         query = query.where(PerformanceRecord.owner_user_id == user.id)
     rows = (await db.execute(query.order_by(PerformanceRecord.updated_at.desc()))).scalars().all()
+
+    # Batch resolve names
+    sw_ids = list({r.software_id for r in rows if r.software_id})
+    pf_ids = list({r.profile_id for r in rows if r.profile_id})
+    tv_ids = list({r.template_version_id for r in rows if r.template_version_id})
+
+    sw_map = {}
+    if sw_ids:
+        sw_rows = (await db.execute(select(Software).where(Software.id.in_(sw_ids)))).scalars().all()
+        sw_map = {s.id: s.name for s in sw_rows}
+    pf_map = {}
+    if pf_ids:
+        pf_rows = (await db.execute(select(Profile).where(Profile.id.in_(pf_ids)))).scalars().all()
+        pf_map = {p.id: p.name for p in pf_rows}
+
+    items = []
+    for r in rows:
+        d = record_dict(r)
+        d["softwareName"] = sw_map.get(r.software_id)
+        d["profileName"] = pf_map.get(r.profile_id)
+        items.append(d)
+
     return {
-        "items": [record_dict(record) for record in rows],
+        "items": items,
         "pagination": {
             "page": 1,
             "pageSize": len(rows) or 20,
@@ -101,7 +124,8 @@ async def get(
     """Read one record, with cross-owner visibility gated by update-any."""
     _, permissions = await get_roles_permissions(db, user.id)
     owner_filter = None if "data:update-any" in permissions else user.id
-    return record_dict(await get_record(db, record_id, owner_user_id=owner_filter))
+    record = await get_record(db, record_id, owner_user_id=owner_filter)
+    return await record_dict_with_names(db, record)
 
 
 def _parse_record_etag(if_match: str, record_id: str) -> int:
@@ -161,7 +185,7 @@ async def patch(
         if exc.code == ErrorCode.CONFLICT:
             raise AppError(ErrorCode.PRECONDITION_FAILED, exc.message)
         raise
-    return record_dict(updated)
+    return await record_dict_with_names(db, updated)
 
 
 @router.post("/{record_id}/submit")

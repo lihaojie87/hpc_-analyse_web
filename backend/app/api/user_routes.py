@@ -8,7 +8,12 @@ from app.core.errors import AppError,ErrorCode
 router=APIRouter(prefix="/users")
 @router.get("")
 async def users(user=Depends(require_permission("user:manage")),db:AsyncSession=Depends(get_db)):
-    us=(await db.execute(select(User))).scalars().all(); return {"items":[{"id":u.id,"username":u.username,"email":u.email,"displayName":u.display_name,"isActive":u.is_active} for u in us],"pagination":{"page":1,"pageSize":20,"total":len(us),"totalPages":1}}
+    us=(await db.execute(select(User))).scalars().all()
+    items=[]
+    for u in us:
+        roles=(await db.execute(select(Role.code).join(UserRole,UserRole.role_id==Role.id).where(UserRole.user_id==u.id))).scalars().all()
+        items.append({"id":u.id,"username":u.username,"email":u.email,"displayName":u.display_name,"isActive":u.is_active,"roles":list(roles)})
+    return {"items":items,"pagination":{"page":1,"pageSize":20,"total":len(items),"totalPages":1}}
 @router.patch("/{user_id}")
 async def update(user_id:str,payload:dict,user=Depends(require_permission("user:manage")),db:AsyncSession=Depends(get_db)):
     u=(await db.execute(select(User).where(User.id==user_id))).scalar_one_or_none()

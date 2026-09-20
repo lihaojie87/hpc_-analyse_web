@@ -33,17 +33,38 @@ class FeishuAdapter:
                 await asyncio.sleep(2 ** attempt)
         raise ValueError("SOURCE_TIMEOUT")
 
+    async def _post(self, path: str, json_data: dict[str, Any] | None = None, params: dict[str, Any] | None = None, token: str | None = None) -> dict:
+        for attempt in range(self.max_retries + 1):
+            try:
+                async with httpx.AsyncClient(base_url=self.base_url, timeout=10.0) as client:
+                    response = await client.post(path, json=json_data, params=params, headers=self._headers(token))
+                if response.status_code in (429, 500, 502, 503, 504) and attempt < self.max_retries:
+                    await asyncio.sleep(2 ** attempt)
+                    continue
+                if response.status_code == 401: raise ValueError("SOURCE_AUTH_FAILED")
+                if response.status_code == 403: raise ValueError("SOURCE_FORBIDDEN")
+                if response.status_code == 429: raise ValueError("SOURCE_RATE_LIMITED")
+                response.raise_for_status()
+                return response.json()
+            except (httpx.TimeoutException, httpx.TransportError) as exc:
+                if attempt >= self.max_retries: raise ValueError("SOURCE_TIMEOUT") from exc
+                await asyncio.sleep(2 ** attempt)
+        raise ValueError("SOURCE_TIMEOUT")
+
     async def discover_workbooks(self, source: DataSource) -> list[dict]:
         data = await self._get("/open-apis/drive/v1/files", {"page_size": 50})
         return list(data.get("data", {}).get("files", []))
 
     async def discover_sheets(self, workbook_id: str) -> list[dict]:
-        data = await self._get(f"/open-apis/sheets/v3/spreadsheets/{workbook_id}/sheets/query")
+        data = await self._get(f"/open-apis/sheets/v2/spreadsheets/{workbook_id}/metainfo")
         return list(data.get("data", {}).get("sheets", []))
 
     async def read_values(self, workbook_id: str, sheet_id: str, range_: str | None = None) -> dict:
-        endpoint = f"/open-apis/sheets/v2/spreadsheets/{workbook_id}/values/{sheet_id}"
-        data = await self._get(endpoint, {"range": range_} if range_ else None)
+        if range_:
+            endpoint = f"/open-apis/sheets/v2/spreadsheets/{workbook_id}/values/{range_}"
+        else:
+            endpoint = f"/open-apis/sheets/v2/spreadsheets/{workbook_id}/values/{sheet_id}"
+        data = await self._get(endpoint)
         return data.get("data", data)
 
     # ------------------------------------------------------------------
@@ -137,7 +158,9 @@ class FeishuAdapter:
         """
         if not source.workbook_token:
             raise ValueError("SOURCE_SCHEMA_CHANGED")
-        payload = await self.read_values(source.workbook_token, sheet_id)
+        # Use a broad range so sheets with data outside the default region are captured
+        payload = await self.read_values(source.workbook_token, sheet_id,
+                                         f"{sheet_id}!A1:ZZ500")
         value_range = payload.get("valueRange", {}) if isinstance(payload, dict) else {}
         values = value_range.get("values", []) if isinstance(value_range, dict) else []
         rows = values if isinstance(values, list) else []

@@ -9,7 +9,9 @@ interface RecordItem {
   id: string;
   stableKey: string;
   softwareId: string;
+  softwareName?: string;
   profileId: string;
+  profileName?: string;
   templateVersionId?: string;
   lifecycleStatus: string;
   revision: number;
@@ -93,7 +95,7 @@ export default function Records(): JSX.Element {
     return records.filter((record) => {
       if (statusFilter !== 'all' && record.lifecycleStatus !== statusFilter) return false;
       if (!query) return true;
-      return [record.stableKey, record.softwareId, record.profileId, record.lifecycleStatus]
+      return [record.stableKey, record.softwareName, record.softwareId, record.profileName, record.profileId, record.lifecycleStatus]
         .some((value) => (value ?? '').toLowerCase().includes(query));
     });
   }, [records, search, statusFilter]);
@@ -183,8 +185,8 @@ export default function Records(): JSX.Element {
               {filtered.map((record) => (
                 <tr key={record.id}>
                   <td data-label="Stable Key"><span className="mono">{record.stableKey}</span></td>
-                  <td data-label="软件"><span className="mono">{record.softwareId || '—'}</span></td>
-                  <td data-label="画像"><span className="mono">{record.profileId || '—'}</span></td>
+                  <td data-label="软件">{record.softwareName || record.softwareId?.slice(0, 20) || '—'}</td>
+                  <td data-label="画像">{record.profileName || record.profileId?.slice(0, 20) || '—'}</td>
                   <td data-label="状态"><StatusBadge value={record.lifecycleStatus} /></td>
                   <td data-label="Revision">{record.revision}</td>
                   <td data-label="更新时间">{formatTime(record.updatedAt)}</td>

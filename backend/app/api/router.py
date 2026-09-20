@@ -11,6 +11,7 @@ from app.api.import_routes import router as imports
 from app.api.source_routes import router as sources
 from app.api.sync_routes import router as sync
 from app.api.event_routes import router as events
+from app.api.analytics_routes import router as analytics
 router=APIRouter()
 router.include_router(auth,prefix="/api/v1")
 router.include_router(users,prefix="/api/v1")
@@ -25,3 +26,4 @@ router.include_router(imports,prefix='/api/v1')
 router.include_router(sources,prefix='/api/v1')
 router.include_router(sync,prefix='/api/v1')
 router.include_router(events,prefix='/api/v1')
+router.include_router(analytics,prefix='/api/v1')

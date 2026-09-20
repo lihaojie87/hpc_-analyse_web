@@ -17,6 +17,11 @@ class Settings(BaseSettings):
     login_lock_seconds: int = 900
     bootstrap_admin_email: str | None = None
     bootstrap_admin_password: str | None = None
+    # Feishu Open Platform credentials for automatic token resolution.
+    # When both are configured, the import flow auto-acquires a tenant
+    # access token so users only need to provide a spreadsheet URL.
+    feishu_app_id: str | None = None
+    feishu_app_secret: str | None = None
     model_config = SettingsConfigDict(env_prefix="HPC_", env_file=".env", extra="ignore")
 
     @model_validator(mode="after")

@@ -20,6 +20,7 @@ import {
   SuccessNotice,
   Textarea,
 } from '../components/ui';
+import { NameWithId, PayloadView } from '../components/PayloadView';
 
 /**
  * A single performance record as returned by `GET /api/v1/records/{id}` and
@@ -32,8 +33,11 @@ interface RecordItem {
   id: string;
   stableKey: string;
   softwareId: string;
+  softwareName?: string | null;
   profileId: string;
+  profileName?: string | null;
   templateVersionId: string;
+  templateName?: string | null;
   ownerUserId: string;
   lifecycleStatus: string;
   revision: number;
@@ -132,6 +136,23 @@ export default function RecordDetail(): JSX.Element {
       return false;
     }
   }, [payload]);
+
+  /**
+   * Live parse of the editor text for the read-only structured preview. Only
+   * set when the JSON is valid and a non-array object, so the preview tracks
+   * the editable draft without ever blocking the save flow.
+   */
+  const parsedPreview = useMemo<Record<string, unknown> | null>(() => {
+    if (!jsonValid) return null;
+    try {
+      const parsed = JSON.parse(payload) as unknown;
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? (parsed as Record<string, unknown>)
+        : null;
+    } catch {
+      return null;
+    }
+  }, [payload, jsonValid]);
 
   // Warn on hard navigation (tab close / reload) while the draft is dirty.
   useEffect(() => {
@@ -303,16 +324,16 @@ export default function RecordDetail(): JSX.Element {
             <dd className="mono" data-testid="record-stable-key">{record.stableKey}</dd>
           </div>
           <div className="meta-item">
-            <dt>软件 ID</dt>
-            <dd className="mono" data-testid="record-software-id">{record.softwareId || '—'}</dd>
+            <dt>软件</dt>
+            <dd data-testid="record-software-id"><NameWithId name={record.softwareName} id={record.softwareId} /></dd>
           </div>
           <div className="meta-item">
-            <dt>画像 ID</dt>
-            <dd className="mono" data-testid="record-profile-id">{record.profileId || '—'}</dd>
+            <dt>画像</dt>
+            <dd data-testid="record-profile-id"><NameWithId name={record.profileName} id={record.profileId} /></dd>
           </div>
           <div className="meta-item">
-            <dt>模板版本 ID</dt>
-            <dd className="mono" data-testid="record-template-version-id">{record.templateVersionId || '—'}</dd>
+            <dt>模板版本</dt>
+            <dd data-testid="record-template-version-id"><NameWithId name={record.templateName} id={record.templateVersionId} /></dd>
           </div>
           <div className="meta-item">
             <dt>所有者</dt>
@@ -353,6 +374,17 @@ export default function RecordDetail(): JSX.Element {
             「重载最新」将拉取服务器最新版本并载入编辑器（放弃本地草稿）；「放弃覆盖」将撤销本地修改，
             恢复到上次加载的内容且不覆盖服务器。
           </p>
+        </section>
+      )}
+
+      {/* ---- Payload 结构化只读预览（随编辑区实时解析，不参与保存） ---- */}
+      {parsedPreview && (
+        <section className="card stack" aria-label="Payload 结构化预览">
+          <div className="section-heading">
+            <h2 className="card-title">Payload 结构化预览</h2>
+            <span className="muted">只读 · 实时反映下方编辑区</span>
+          </div>
+          <PayloadView payload={parsedPreview} />
         </section>
       )}
 

@@ -35,6 +35,12 @@ outputs/
 *.bak*
 **/LAST_BACKEND_BAK.txt
 
+# WorkBuddy local project data (architecture deliverables, memory, team output)
+.workbuddy/
+
+# Python packaging metadata
+**/*.egg-info/
+
 # OS/editor
 .DS_Store
 Thumbs.db

@@ -14,6 +14,19 @@ from app.deps.auth_deps import require_permission
 router = APIRouter(prefix="/sources")
 
 
+def _token_from_source(source: DataSource) -> str | None:
+    """Extract Feishu API access token from source config JSON."""
+    if isinstance(source.config_json, dict):
+        return source.config_json.get("token") or source.config_json.get("apiToken")
+    return None
+
+
+def _make_adapter(source: DataSource) -> FeishuAdapter:
+    """Create a FeishuAdapter with token from source config."""
+    token = _token_from_source(source)
+    return FeishuAdapter(token=token)
+
+
 def _source_dict(source: DataSource) -> dict[str, Any]:
     """Serialize source metadata without exposing credentials."""
     return {
@@ -67,6 +80,9 @@ async def create_source(
         credential_ref=credential_ref,
         config_json=payload.get("config") if isinstance(payload.get("config"), dict) else {},
     )
+    # If a token is provided directly, store it in config_json
+    if payload.get("token") and isinstance(payload.get("token"), str):
+        source.config_json = {**source.config_json, "token": payload["token"]}
     db.add(source)
     await db.commit()
     return _source_dict(source)
@@ -95,7 +111,11 @@ async def discover_source(
         raise AppError(ErrorCode.NOT_FOUND, "数据源不存在")
     if source.status != "active":
         raise AppError(ErrorCode.CONFLICT, "数据源已禁用")
-    return await FeishuAdapter().discover(source)
+    adapter = _make_adapter(source)
+    if source.workbook_token:
+        sheets = await adapter.discover_sheets(source.workbook_token)
+        return {"items": sheets}
+    return await adapter.discover(source)
 
 
 @router.get("/{source_id}/workbooks/{workbook_id}/sheets")
@@ -110,7 +130,7 @@ async def discover_sheets(
         raise AppError(ErrorCode.NOT_FOUND, "数据源不存在")
     if source.status != "active":
         raise AppError(ErrorCode.CONFLICT, "数据源已禁用")
-    return {"items": await FeishuAdapter().discover_sheets(workbook_id)}
+    return {"items": await _make_adapter(source).discover_sheets(workbook_id)}
 
 
 @router.post("/{source_id}/health")
@@ -122,4 +142,4 @@ async def source_health(
     source = await db.get(DataSource, source_id)
     if not source:
         raise AppError(ErrorCode.NOT_FOUND, "数据源不存在")
-    return await FeishuAdapter().health_check(source)
+    return await _make_adapter(source).health_check(source)

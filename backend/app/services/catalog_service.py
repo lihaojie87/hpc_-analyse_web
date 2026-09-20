@@ -4,9 +4,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.errors import AppError, ErrorCode
 from app.db.models import (
     CatalogHead,
+    DataTemplate,
     DataVersion,
     PerformanceRecord,
     PerformanceRecordVersion,
+    Profile,
+    Software,
     TemplateVersion,
 )
 
@@ -62,6 +65,23 @@ def record_dict(record: PerformanceRecord) -> dict:
         "payload": record.draft_payload,
         "etag": f'"record-{record.id}-{record.revision}"',
     }
+
+
+async def record_dict_with_names(db: AsyncSession, record: PerformanceRecord) -> dict:
+    """Serialize a record with resolved Software / Profile / Template names."""
+    base = record_dict(record)
+    if record.software_id:
+        sw = await db.get(Software, record.software_id)
+        base["softwareName"] = sw.name if sw else None
+    if record.profile_id:
+        pr = await db.get(Profile, record.profile_id)
+        base["profileName"] = pr.name if pr else None
+    if record.template_version_id:
+        tv = await db.get(TemplateVersion, record.template_version_id)
+        if tv:
+            dt = await db.get(DataTemplate, tv.template_id)
+            base["templateName"] = dt.name if dt else None
+    return base
 
 
 async def get_current_catalog_version(db: AsyncSession) -> tuple[CatalogHead | None, DataVersion | None]:

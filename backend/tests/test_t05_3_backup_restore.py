@@ -2,10 +2,19 @@
 from __future__ import annotations
 
 import json
+import pytest
 import os
 import shutil
 from pathlib import Path
 
+pytest.importorskip(
+    "scripts.backup_restore",
+    reason=(
+        "T05.3 备份/恢复工具未随仓库进入本机工作区"
+        "（依据 项目推进记录.md 2026-09-19 C 节："
+        "T05.4/T05.3 工具层只在原工作区，未随仓库迁移），跳过收集而非报错"
+    ),
+)
 from scripts import backup_restore
 from scripts.backup_restore import (
     backup_postgres,
