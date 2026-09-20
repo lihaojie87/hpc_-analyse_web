@@ -10,6 +10,7 @@ import CaseDetail from './pages/CaseDetail';
 import DataDescription from './pages/DataDescription';
 import AdminUsers from './pages/AdminUsers';
 import ImportWizard from './pages/ImportWizard';
+import TemplateAdmin from './pages/TemplateAdmin';
 import ProtectedRoute from './components/ProtectedRoute';
 import AppShell from './components/AppShell';
 
@@ -27,5 +28,6 @@ export default function App(): JSX.Element { return <BrowserRouter><Routes>
   <Route path="/records/:id" element={<BusinessPage><RecordDetail /></BusinessPage>} />
   <Route path="/import" element={<BusinessPage><ImportWizard /></BusinessPage>} />
   <Route path="/admin/users" element={<BusinessPage><AdminUsers /></BusinessPage>} />
+  <Route path="/admin/templates" element={<BusinessPage><TemplateAdmin /></BusinessPage>} />
   <Route path="*" element={<Navigate to="/dashboard" replace />} />
 </Routes></BrowserRouter>; }
