@@ -1,0 +1,49 @@
+# backup-alert.service — T05.4 backup failure alert daemon (deployment artifact)
+#
+# This unit is a MINIMAL, REVIEW-ONLY deployment artifact. It is NOT installed
+# on any host and carries NO production sign-off. It is owned solely by the
+# T05.4 daemon-artifact task and must be reviewed before any change window.
+#
+# ---------------------------------------------------------------------------
+# DEPLOYMENT METADATA — TEMPLATE FIELDS (do NOT forge; fill in the change window)
+#   Owner:           <TEMPLATE — assign a named service owner before enable>
+#   ApprovalTicket:  <TEMPLATE — approved change ticket id; never fabricate>
+#   Rollback:        <TEMPLATE — stop+disable unit; remove/restore env; if the
+#                              script was changed, revert via VCS to pre-change>
+# ---------------------------------------------------------------------------
+#
+# Preconditions that ops MUST satisfy before `systemctl enable`/`start`:
+#   1. backup_alert.sh is present and executable at the ExecStart path below.
+#   2. The EnvironmentFile at the production path below EXISTS (this unit does
+#      NOT use the optional "-" prefix, so a missing env fails the start
+#      closed — by design, to surface a misconfig instead of silent no-op).
+#   3. `flock` (util-linux) is available on the target (CentOS): the script
+#      fails closed without it, so the daemon would never check.
+#   4. State/log/lock directories under BACKUP_ALERT_BASE are writable by User.
+#
+# The script has built-in defaults for every variable (see backup_alert.sh),
+# so the env file only overrides what ops chooses. No secrets belong in the
+# env file: the backup command sources the protected application env itself.
+
+[Unit]
+Description=HPC Perf Platform backup failure alert daemon (T05.4)
+Documentation=file:///workspace/hpc-perf-platform/backend/scripts/backup_alert.sh
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/workspace/hpc-perf-platform/backend/scripts
+# Production path. Do NOT commit a real webhook/credential here; the env file
+# holds only non-secret operational variables (see backup-alert.env.template).
+EnvironmentFile=/workspace/hpc-perf-platform/backend/scripts/backup_alert.env
+ExecStart=/workspace/hpc-perf-platform/backend/scripts/backup_alert.sh daemon
+Restart=on-failure
+RestartSec=5
+# Surface the daemon in the journal for observability.
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=backup-alert
+
+[Install]
+WantedBy=multi-user.target

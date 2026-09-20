@@ -1,0 +1,16 @@
+[Unit]
+Description=HPC Performance Platform FastAPI backend
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/workspace/hpc-perf-platform/backend
+EnvironmentFile=/workspace/hpc-perf-platform/.env
+ExecStartPre=/workspace/hpc-perf-platform/backend/.venv/bin/python -m alembic upgrade head
+ExecStart=/workspace/hpc-perf-platform/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

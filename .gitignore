@@ -1,0 +1,42 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+**/credentials.env
+**/*secret*
+
+# Python
+**/.venv/
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/.pytest_tmp*/
+**/qa_f8_draft_*/
+**/.qa_*/
+**/qa_*/
+
+# Node / frontend build
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Local databases and runtime state
+*.db
+*.sqlite
+*.sqlite3
+**/backup-alert.state/
+**/*.log
+**/uvicorn.pid
+**/*.pid
+
+# Local services and generated evidence
+.local/
+outputs/
+*.bak*
+**/LAST_BACKEND_BAK.txt
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
